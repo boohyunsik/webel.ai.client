@@ -3,17 +3,25 @@
 import { HomeIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
-import { useGetProject } from "@/core/project/useGetProjects";
+import { projectsQuery } from "@/core/query/project";
+import { apolloClient } from "@/app/layout";
+import { projects } from "@/core/state/project";
+import { useReactiveVar } from "@apollo/client";
+import { user } from "@/core/state/user";
+import * as crypto from "crypto";
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(` `);
 }
 
-export default function Sidebar() {
+export const Sidebar = () => {
   const segment = useSelectedLayoutSegment();
-  const projects = useGetProject({ userId: `bhs9158` });
-  projects.then(console.log);
+  const projectsVar = useReactiveVar(projects);
+  const currentUser = useReactiveVar(user);
+  apolloClient.query({ query: projectsQuery(currentUser) }).then((response) => {
+    projects(response.data.project);
+  });
   const navigation = [
     {
       id: 0,
@@ -65,6 +73,25 @@ export default function Sidebar() {
                     </li>
                   ))}
                 </ul>
+                <div className={`text-xs font-semibold`}>My Project</div>
+                <ul role={`list`}>
+                  {projectsVar.map((project) => (
+                    <li key={project.title}>
+                      <Link
+                        href={`/project?id=${crypto
+                          .createHash(`sha256`)
+                          .update(
+                            `${project.user}${project.title}${project.timestamp}`,
+                          )
+                          .digest(`hex`)
+                          .substring(0, 6)}`}
+                        className={`text-sm text-white rounded-md p-2 leading-8 font-semibold`}
+                      >
+                        {project.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </li>
             </ul>
           </nav>
@@ -72,4 +99,4 @@ export default function Sidebar() {
       </div>
     </>
   );
-}
+};

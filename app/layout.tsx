@@ -3,7 +3,18 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Fragment } from "react";
-import Sidebar from "@/app/sidebar";
+import { Sidebar } from "@/app/sidebar";
+import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
+import { RestLink } from "apollo-link-rest";
+
+const apiLink = new RestLink({
+  uri: `https://n79v1mqbd0.execute-api.ap-northeast-2.amazonaws.com/`,
+});
+
+export const apolloClient = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: apiLink,
+});
 
 // const inter = Inter({ subsets: ["latin"] });
 
@@ -19,13 +30,15 @@ export default function RootLayout({
 }) {
   console.log(`init root layout`);
   return (
-    <html lang={`en`}>
-      <>
-        <Sidebar />
-        <main className={`py-10 lg:pl-72`}>
-          <div className={`px-4 sm:px-6 lg:px-8`}>{children}</div>
-        </main>
-      </>
-    </html>
+    <ApolloProvider client={apolloClient}>
+      <html lang={`en`}>
+        <>
+          <Sidebar />
+          <main className={`py-10 lg:pl-72`}>
+            <div className={`px-4 sm:px-6 lg:px-8`}>{children}</div>
+          </main>
+        </>
+      </html>
+    </ApolloProvider>
   );
 }
